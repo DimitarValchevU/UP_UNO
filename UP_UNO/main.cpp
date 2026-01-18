@@ -69,9 +69,10 @@ int main()
 
 
 	//Menu Choice
-	std::cout << "--- UNO ---" << std::endl;
-	std::cout << "1. New Game" << std::endl;
-	std::cout << "2. Load Game" << std::endl;
+	std::cout << "--- UNO ---" << newline;
+	std::cout << "First person to to say \"UNO!\" and then play their last card wins the game!" << newline;
+	std::cout << "1. New Game" << newline;
+	std::cout << "2. Load Game" << newline;
 	std::cout << "Enter your choice: ";
 
 	size_t choice;
@@ -84,12 +85,12 @@ int main()
 	{
 		if (!loadGame("game.txt", numberOfPlayers, playerNames, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer))
 		{
-			std::cout << "Failed to load save file. Starting new game instead..." << std::endl;
+			std::cout << "Failed to load save file. Starting new game instead..." << newline;
 			choice = 1;
 		}
 		else
 		{
-			std::cout << "Game loaded successfully!" << std::endl;
+			std::cout << "Game loaded successfully!" << newline;
 		}
 	}
 
@@ -106,7 +107,7 @@ int main()
 	{
 		saveGame("game.txt", numberOfPlayers, playerNames, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer);
 
-		size_t result = executeGameLogic("game.txt", numberOfPlayers, playerNames, drawPile, discardPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer);
+		size_t result = executeGameLogic("game.txt", numberOfPlayers, playerNames, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer);
 		if (result == 1)
 			continue;
 		else if (result == 2)

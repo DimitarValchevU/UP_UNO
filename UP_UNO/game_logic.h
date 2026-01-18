@@ -251,7 +251,7 @@ bool loadGame(const char* filename,
 
 	file.getline(buffer, BUFFER_SIZE);
 	file.getline(buffer, BUFFER_SIZE);
-	size_t numPlayersFromFile = (size_t)(atoi(my_trim(trimmed, buffer)));
+	size_t numPlayersFromFile = (size_t)(my_atoi(my_trim(trimmed, buffer)));
 
 	if (playerNames != nullptr)
 	{
@@ -287,7 +287,7 @@ bool loadGame(const char* filename,
 
 	file.getline(buffer, BUFFER_SIZE);
 	file.getline(buffer, BUFFER_SIZE);
-	drawPileSize = (size_t)(atoi(my_trim(trimmed, buffer)));
+	drawPileSize = (size_t)(my_atoi(my_trim(trimmed, buffer)));
 
 	file.getline(buffer, BUFFER_SIZE);
 	for (size_t i = 0; i < drawPileSize; i++)
@@ -299,7 +299,7 @@ bool loadGame(const char* filename,
 
 	file.getline(buffer, BUFFER_SIZE);
 	file.getline(buffer, BUFFER_SIZE);
-	discardPileSize = (size_t)(atoi(my_trim(trimmed, buffer)));
+	discardPileSize = (size_t)(my_atoi(my_trim(trimmed, buffer)));
 
 	file.getline(buffer, BUFFER_SIZE);
 	for (size_t i = 0; i < discardPileSize; i++)
@@ -320,7 +320,7 @@ bool loadGame(const char* filename,
 	{
 		file.getline(buffer, BUFFER_SIZE);
 		file.getline(buffer, BUFFER_SIZE);
-		handSizes[p] = (size_t)(atoi(my_trim(trimmed, buffer)));
+		handSizes[p] = (size_t)(my_atoi(my_trim(trimmed, buffer)));
 
 		file.getline(buffer, BUFFER_SIZE);
 		hands[p] = new char* [CARD_COUNT];
@@ -345,7 +345,7 @@ bool loadGame(const char* filename,
 
 	file.getline(buffer, BUFFER_SIZE);
 	file.getline(buffer, BUFFER_SIZE);
-	currentPlayer = (size_t)(atoi(my_trim(trimmed, buffer)));
+	currentPlayer = (size_t)(my_atoi(my_trim(trimmed, buffer)));
 
 	file.close();
 	return true;

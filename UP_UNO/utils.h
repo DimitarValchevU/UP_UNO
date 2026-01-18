@@ -114,6 +114,33 @@ char* my_trim(char* dest, const char* src)
 	return dest;
 }
 
+int my_atoi(const char* str)
+{
+	if (str == nullptr)
+		return 0;
+
+	int result = 0;
+	size_t k = 0;
+
+	if (str[k] == '-')
+		k++;
+
+	while (str[k] != '\0')
+	{
+		if (!(str[k] >= '0' && str[k] <= '9'))
+			return 0;
+
+		result *= 10;
+		result += str[k] - '0';
+		k++;
+	}
+
+	if (str[0] == '-')
+		result *= -1;
+
+	return result;
+}
+
 bool inputFailed(std::istream& input)
 {
 	if (input.fail())
