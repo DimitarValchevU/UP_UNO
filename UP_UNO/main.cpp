@@ -9,7 +9,7 @@ const char* newline = "\r\n";
 const size_t BUFFER_SIZE = 256;
 const size_t MIN_PLAYERS = 2;
 const size_t MAX_PLAYERS = 4;
-const size_t CARD_COUNT = 108;
+const size_t CARD_COUNT = 30;
 const size_t MAX_CARD_LABEL_LENGTH = 9;
 const size_t INITIAL_CARD_DRAW = 7;
 
@@ -220,8 +220,29 @@ void removeCardFromHand(size_t cardIndex, char* hand[MAX_CARD_LABEL_LENGTH + 1],
 	}
 	handSize--;
 }
-void addCardToHand(const char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& drawPileSize, char* hand[MAX_CARD_LABEL_LENGTH + 1], size_t& handSize)
+void addCardToHand(char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& drawPileSize, char* hand[MAX_CARD_LABEL_LENGTH + 1], size_t& handSize,
+		char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& discardPileSize, std::ostream* reshuffleSignalizationOutput = nullptr) //for reshuffle
 {
+	if (drawPileSize == 0) 
+	{
+		char discardPileTop[MAX_CARD_LABEL_LENGTH + 1];
+		my_strcpy(discardPileTop, discardPile[discardPileSize - 1]);
+		for (size_t i = 0; i < discardPileSize - 1; i++)
+		{
+			my_strcpy(drawPile[i], discardPile[i]);
+		}
+		my_strcpy(discardPile[0], discardPileTop);
+		drawPileSize = discardPileSize - 1;
+		discardPileSize = 1;
+
+		std::random_device rndDevice = {};
+		std::mt19937 mtGenerator(rndDevice());
+		std::shuffle(drawPile, drawPile + drawPileSize, mtGenerator);
+
+		if (reshuffleSignalizationOutput != nullptr)
+			std::cout << newline << "In order to continue the game, the Discard Pile (except for the top card) has been reshuffled and is now the new Draw Pile!" << newline;
+	}
+
 	my_strcpy(hand[handSize], drawPile[drawPileSize - 1]);
 	handSize++;
 	drawPileSize--;
@@ -290,40 +311,55 @@ int main()
 	std::cout << newline;
 
 	//GAME LOGIC
-	/*const*/ char drawPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {
+	///*const*/ char drawPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {
+	//	// Red
+	//	"R_0","R_1","R_2","R_3","R_4","R_5","R_6","R_7","R_8","R_9",
+	//	"R_SKIP","R_REVERSE","R_+2",
+	//	"R_1","R_2","R_3","R_4","R_5","R_6","R_7","R_8","R_9",
+	//	"R_SKIP","R_REVERSE","R_+2",
+	//
+	//	// Green
+	//	"G_0","G_1","G_2","G_3","G_4","G_5","G_6","G_7","G_8","G_9",
+	//	"G_SKIP","G_REVERSE","G_+2",
+	//	"G_1","G_2","G_3","G_4","G_5","G_6","G_7","G_8","G_9",
+	//	"G_SKIP","G_REVERSE","G_+2",
+	//
+	//	// Yellow
+	//	"Y_0","Y_1","Y_2","Y_3","Y_4","Y_5","Y_6","Y_7","Y_8","Y_9",
+	//	"Y_SKIP","Y_REVERSE","Y_+2",
+	//	"Y_1","Y_2","Y_3","Y_4","Y_5","Y_6","Y_7","Y_8","Y_9",
+	//	"Y_SKIP","Y_REVERSE","Y_+2",
+	//
+	//	// Blue
+	//	"B_0","B_1","B_2","B_3","B_4","B_5","B_6","B_7","B_8","B_9",
+	//	"B_SKIP","B_REVERSE","B_+2",
+	//	"B_1","B_2","B_3","B_4","B_5","B_6","B_7","B_8","B_9",
+	//	"B_SKIP","B_REVERSE","B_+2",
+	//
+	//	// Wilds
+	//	"W_WILD",
+	//	"W_WILD",
+	//	"W_WILD",
+	//	"W_WILD",
+	//	"W_WILD+4",
+	//	"W_WILD+4",
+	//	"W_WILD+4",
+	//	"W_WILD+4"
+	//};
+	char drawPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {
 		// Red
 		"R_0","R_1","R_2","R_3","R_4","R_5","R_6","R_7","R_8","R_9",
-		"R_SKIP","R_REVERSE","R_+2",
-		"R_1","R_2","R_3","R_4","R_5","R_6","R_7","R_8","R_9",
-		"R_SKIP","R_REVERSE","R_+2",
+
 
 		// Green
 		"G_0","G_1","G_2","G_3","G_4","G_5","G_6","G_7","G_8","G_9",
-		"G_SKIP","G_REVERSE","G_+2",
-		"G_1","G_2","G_3","G_4","G_5","G_6","G_7","G_8","G_9",
-		"G_SKIP","G_REVERSE","G_+2",
+
 
 		// Yellow
 		"Y_0","Y_1","Y_2","Y_3","Y_4","Y_5","Y_6","Y_7","Y_8","Y_9",
-		"Y_SKIP","Y_REVERSE","Y_+2",
-		"Y_1","Y_2","Y_3","Y_4","Y_5","Y_6","Y_7","Y_8","Y_9",
-		"Y_SKIP","Y_REVERSE","Y_+2",
+
 
 		// Blue
-		"B_0","B_1","B_2","B_3","B_4","B_5","B_6","B_7","B_8","B_9",
-		"B_SKIP","B_REVERSE","B_+2",
-		"B_1","B_2","B_3","B_4","B_5","B_6","B_7","B_8","B_9",
-		"B_SKIP","B_REVERSE","B_+2",
-
-		// Wilds
-		"W_WILD",
-		"W_WILD",
-		"W_WILD",
-		"W_WILD",
-		"W_WILD+4",
-		"W_WILD+4",
-		"W_WILD+4",
-		"W_WILD+4"
 	};
 	size_t drawPileSize = CARD_COUNT;
 	char discardPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {};
@@ -332,7 +368,7 @@ int main()
 	//CARD SHUFFLE
 	std::random_device rndDevice = {};
 	std::mt19937 mtGenerator(rndDevice());
-	std::shuffle(drawPile, drawPile + drawPileSize - 1, mtGenerator);
+	std::shuffle(drawPile, drawPile + drawPileSize, mtGenerator);
 
 	char*** hands = new char** [numberOfPlayers];
 	size_t* handSizes = new size_t[numberOfPlayers];
@@ -396,7 +432,7 @@ int main()
 		if (!hasValidCard)
 		{
 			std::cout << "No valid cards... Automatically drawing card from the Draw Pile: ";
-			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer]);
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
 			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
 			std::cout << '[' << handSizes[currentPlayer] << "] " << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << newline;
 
@@ -450,38 +486,49 @@ int main()
 		char playedCardValue[MAX_CARD_LABEL_LENGTH + 1] = {};
 		my_strcpy(playedCardValue, playedCard + 2);
 
-		//Apply card effects which affect order
-		if (!my_strcmp(playedCardValue, "REVERSE"))
-			direction = !direction;
-		if (!my_strcmp(playedCardValue, "SKIP"))
-		{
-			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
-		}
-		if (!my_strcmp(playedCardValue, "WILD+4"))
-		{
-			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
-		}
 
 		addCardToDiscardPile(playedCard, discardPile, discardPileSize);
 		removeCardFromHand(cardToPlay, hands[currentPlayer], handSizes[currentPlayer]);
 
-		//PREPARE NEXT PLAYER
-		prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+		//Apply card effects
+		if (!my_strcmp(playedCardValue, "REVERSE"))
+		{
+			direction = !direction;
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
 
-		//Apply card effects do not affect order
-				//if (!my_strcmp(playedCardValue, "+2"))
-		//{
-		//	prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
-		//}
-		//if (!my_strcmp(playedCardValue, "WILD+4"))
-		//{
-		//	prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
-		//}
-		if (!my_strcmp(playedCardValue, "WILD") || !my_strcmp(playedCardValue, "WILD+4"))
+			std::cin.ignore();
+			std::cout << "Press Enter to continue!" << newline;
+			std::cin.get();
+		}
+		else if (!my_strcmp(playedCardValue, "SKIP"))
+		{
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+
+			std::cin.ignore();
+			std::cout << "Press Enter to continue!" << newline;
+			std::cin.get();
+		}
+		else if (!my_strcmp(playedCardValue, "+2"))
+		{
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+
+			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
+			std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
+			std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << " drawed from the next player" << newline;
+
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+			std::cin.ignore();
+			std::cout << "Press Enter to continue!" << newline;
+			std::cin.get();
+		}
+		else if (!my_strcmp(playedCardValue, "WILD"))
 		{
 			char buffer[BUFFER_SIZE] = {};
 			char trimmedBuffer[BUFFER_SIZE] = {};
-			std::cout << "Enter a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
+			std::cout << "Choose a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
 			std::cin >> std::ws;
 			std::cin.getline(buffer, BUFFER_SIZE);
 			while (inputFailed(std::cin) || my_strlen(my_trim(trimmedBuffer, buffer)) != 1 ||
@@ -489,15 +536,58 @@ int main()
 			{
 				clearOutput(std::cout);
 				std::cout << '\r' << "Invalid input!" << newline;
-				std::cout << "Enter a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
+				std::cout << "Choose a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
 				std::cin >> std::ws;
 				std::cin.getline(buffer, BUFFER_SIZE);
 			}
 
 			discardPile[discardPileSize - 1][0] = trimmedBuffer[0];
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
 
+			std::cout << "Press Enter to continue!" << newline;
 			std::cin.get();
-			continue;
+		}
+		else if (!my_strcmp(playedCardValue, "WILD+4"))
+		{
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+
+			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
+			std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
+			std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
+			std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
+			std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << " drawed from the next player" << newline;
+
+			char buffer[BUFFER_SIZE] = {};
+			char trimmedBuffer[BUFFER_SIZE] = {};
+			std::cout << "Choose a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
+			std::cin >> std::ws;
+			std::cin.getline(buffer, BUFFER_SIZE);
+			while (inputFailed(std::cin) || my_strlen(my_trim(trimmedBuffer, buffer)) != 1 ||
+				(my_strcmp(trimmedBuffer, "R") && my_strcmp(trimmedBuffer, "G") && my_strcmp(trimmedBuffer, "Y") && my_strcmp(trimmedBuffer, "B")))
+			{
+				clearOutput(std::cout);
+				std::cout << '\r' << "Invalid input!" << newline;
+				std::cout << "Choose a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
+				std::cin >> std::ws;
+				std::cin.getline(buffer, BUFFER_SIZE);
+			}
+
+			discardPile[discardPileSize - 1][0] = trimmedBuffer[0];
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+
+			std::cout << "Press Enter to continue!" << newline;
+			std::cin.get();
+		}
+		else
+		{
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+			std::cin.ignore();
+			std::cout << "Press Enter to continue!" << newline;
+			std::cin.get();
 		}
 
 		/* UNO DETECT
@@ -513,9 +603,6 @@ int main()
 			continue;
 		}
 		*/
-
-		std::cin.ignore();
-		std::cin.get();
 	}
 
 	//MEMORY CLEANUP////////////////////////////
