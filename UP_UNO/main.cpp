@@ -30,16 +30,39 @@ size_t my_strlen(const char* str)
 	return length - 1;
 }
 
+int my_strcmp(const char* lhs, const char* rhs) 
+{
+	if (lhs == nullptr && rhs == nullptr) return 0;
+	if (lhs == nullptr) return -1;
+	if (rhs == nullptr) return 1;
+
+	while (*lhs != '\0' && *rhs != '\0') 
+	{
+		if (*lhs > *rhs) 
+			return 1;
+		if (*lhs < *rhs)
+			return -1;
+		lhs++;
+		rhs++;
+	}
+
+	if (*lhs == '\0' && *rhs == '\0')
+		return 0;
+	if (*lhs == '\0') return -1;
+	return 1;
+}
+
 char* my_strcpy(char* dest, const char* src)
 {
 	if (dest == nullptr || src == nullptr) return nullptr;
 
 	size_t i = 0;
-	while (src[i++] != '\0')
+	while (src[i] != '\0')
 	{
-		dest[i - 1] = src[i - 1];
+		dest[i] = src[i];
+		i++;
 	}
-	dest[i - 1] = '\0';
+	dest[i] = '\0';
 
 	return dest;
 }
@@ -47,7 +70,13 @@ char* my_strcpy(char* dest, const char* src)
 char* my_trim(char* dest, const char* src)
 {
 	if (dest == nullptr || src == nullptr) return nullptr;
+	if (!my_strlen(src))
+	{
+		dest[0] = '\0';
+		return dest;
+	}
 
+	size_t srcLength = my_strlen(src);
 	size_t start = 0;
 	while (
 		src[start] == ' ' ||
@@ -56,14 +85,14 @@ char* my_trim(char* dest, const char* src)
 		src[start] == '\r' ||
 		src[start] == '\v' ||
 		src[start] == '\f'
-		) {
+		) 
+	{
 		start++;
+		if (start == srcLength)
+			break;
 	}
 
-	size_t end = my_strlen(src) - 1;
-	if (end == -1)
-		return nullptr;
-
+	size_t end = srcLength - 1;
 	while (
 		src[end] == ' ' ||
 		src[end] == '\t' ||
@@ -71,8 +100,11 @@ char* my_trim(char* dest, const char* src)
 		src[end] == '\r' ||
 		src[end] == '\v' ||
 		src[end] == '\f'
-		) {
+		) 
+	{
 		end--;
+		if (end < start)
+			break;
 	}
 
 	size_t k = 0;
@@ -83,9 +115,11 @@ char* my_trim(char* dest, const char* src)
 	return dest;
 }
 
+/////////////////////////////////////
 bool inputFailed(std::istream& input)
 {
-	if (input.fail()) {
+	if (input.fail()) 
+	{
 		input.clear();
 
 		char c;
@@ -101,48 +135,72 @@ void clearOutput(std::ostream& output)
 	output << "\033[2J\033[H";
 }
 
-void printCard(std::ostream& output, const char* card) {
-	if (card == nullptr) return;
+//////////////////////////////////////////////
+char* formatCard(char* dest, const char* card) 
+{
+	if (card == nullptr) 
+	{
+		dest[0] = '\0';
+		return dest;
+	}
+	const char* start;
+	const char* end = "\033[0m";
 	switch (card[0])
 	{
 	case 'R':
 	{
-		output << "\033[31m" << card << "\033[0m";
+		start = "\033[31m";
 		break;
 	}
 	case 'G':
 	{
-		output << "\033[32m" << card << "\033[0m";
+		start = "\033[32m";
 		break;
 	}
 	case 'Y':
 	{
-		output << "\033[33m" << card << "\033[0m";
+		start = "\033[33m";
 		break;
 	}
 	case 'B':
 	{
-		output << "\033[34m" << card << "\033[0m";
+		start = "\033[34m";
 		break;
 	}
 	case 'W':
 	{
-		output << "\033[37m" << card << "\033[0m";
+		start = "\033[37m";
 		break;
 	}
 	default:
 	{
-		break;
+		dest[0] = '\0';
+		return dest;
 	}
 	}
+
+	size_t k = 0;
+	while (*start != '\0')
+		dest[k++] = *(start++);
+
+	size_t cardLength = my_strlen(card);
+	for (size_t i = 0; i < cardLength; i++)
+	{
+		dest[k++] = card[i];
+	}
+
+	while (*end != '\0')
+		dest[k++] = *(end++);
+	dest[k] = '\0';
+
+	return dest;
 }
 
 
 
 int main()
 {
-	std::cout << "Hello World!" << newline;
-
+	//Entering the number of players:
 	size_t numberOfPlayers = 0;
 	std::cout << "To start a new game, enter the number of players: ";
 	std::cin >> numberOfPlayers;
@@ -154,8 +212,10 @@ int main()
 		std::cin >> numberOfPlayers;
 	}
 
+	//Entering the names of players:
 	char** playerNames = new char* [numberOfPlayers];
-	for (size_t i = 0; i < numberOfPlayers; i++) {
+	for (size_t i = 0; i < numberOfPlayers; i++) 
+	{
 		char buffer[BUFFER_SIZE] = {};
 		char trimmedBuffer[BUFFER_SIZE] = {};
 
@@ -186,6 +246,7 @@ int main()
 	}
 	std::cout << newline;
 
+	//GAME LOGIC
 	/*const*/ char drawPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {
 		// Red
 		"R_0","R_1","R_2","R_3","R_4","R_5","R_6","R_7","R_8","R_9",
@@ -222,7 +283,10 @@ int main()
 		"W_WILD+4"
 	};
 	size_t drawPileLength = CARD_COUNT;
+	char discardPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {};
+	size_t discardPileLength = 0;
 
+	//CARD SHUFFLE
 	std::random_device rndDevice = {};
 	std::mt19937 mtGenerator(rndDevice());
 	std::shuffle(drawPile, drawPile + drawPileLength - 1, mtGenerator);
@@ -243,20 +307,75 @@ int main()
 		handSizes[i] = INITIAL_CARD_DRAW;
 	}
 
+	my_strcpy(discardPile[discardPileLength], drawPile[drawPileLength - 1]);
+	discardPileLength++;
+	drawPileLength--;
+
 	std::cout << "Cards" << newline;
 	for (size_t i = 0; i < numberOfPlayers; i++)
 	{
 		std::cout << playerNames[i] << ": ";
 		for (size_t j = 0; j < handSizes[i]; j++)
 		{
-			//std::cout << hands[i][j] << ' ';
-			printCard(std::cout, hands[i][j]);
-			std::cout << ' ';
+			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			std::cout << formatCard(formattedCard, hands[i][j]) << ' ';
 		}
 		std::cout << newline;
 	}
 
-	////////////////////////////////////////////
+	std::cin.get();
+	clearOutput(std::cout);
+
+	//GAME LOOP
+	size_t currentPlayer = 0;
+	bool direction = 1; //1 - ascending (clockwise), 0 - descending (counterclockwise)
+	while (true) 
+	{
+		std::cout << "-----UNO-----" << newline;
+		if (discardPileLength <= 0) break;
+
+		{
+			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			std::cout << "Current Discard Pile card: "  << formatCard(formattedCard, discardPile[discardPileLength - 1]) << newline;
+		}
+
+		std::cout << playerNames[currentPlayer] << " (Player " << currentPlayer + 1 << ") is in turn! Their cards are: " << newline;
+		for (size_t i = 0; i < handSizes[currentPlayer]; i++)
+		{
+			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			std::cout << '[' << i + 1 << "] " << formatCard(formattedCard, hands[currentPlayer][i]) << "  ";
+		}
+		std::cout << newline;
+
+		size_t cardToPlay = 0;
+		std::cin >> cardToPlay;
+		if(inputFailed(std::cin))
+		{
+			clearOutput(std::cout);
+			std::cout << '\r' << "Invalid input!" << newline << "Pess any key to try again!" << newline;
+			std::cin.get();
+			clearOutput(std::cout);
+			continue;
+		}
+
+		/* UNO DETECT
+		char buffer[BUFFER_SIZE] = {};
+		char trimmedBuffer[BUFFER_SIZE] = {};
+
+		std::cin >> std::ws;
+		std::cin.getline(buffer, BUFFER_SIZE);
+		if (inputFailed(std::cin) || !my_strlen(my_trim(trimmedBuffer, buffer)))
+		{
+			clearOutput(std::cout);
+			std::cout << '\r' << "Invalid input!" << newline;
+			continue;
+		}
+		*/
+
+		std::cin.get();
+	}
+
+	//MEMORY CLEANUP////////////////////////////
 	for (size_t i = 0; i < numberOfPlayers; i++)
 	{
 		delete[] playerNames[i];
