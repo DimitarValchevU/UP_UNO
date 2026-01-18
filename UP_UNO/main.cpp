@@ -30,15 +30,15 @@ size_t my_strlen(const char* str)
 	return length - 1;
 }
 
-int my_strcmp(const char* lhs, const char* rhs) 
+int my_strcmp(const char* lhs, const char* rhs)
 {
 	if (lhs == nullptr && rhs == nullptr) return 0;
 	if (lhs == nullptr) return -1;
 	if (rhs == nullptr) return 1;
 
-	while (*lhs != '\0' && *rhs != '\0') 
+	while (*lhs != '\0' && *rhs != '\0')
 	{
-		if (*lhs > *rhs) 
+		if (*lhs > *rhs)
 			return 1;
 		if (*lhs < *rhs)
 			return -1;
@@ -85,7 +85,7 @@ char* my_trim(char* dest, const char* src)
 		src[start] == '\r' ||
 		src[start] == '\v' ||
 		src[start] == '\f'
-		) 
+		)
 	{
 		start++;
 		if (start == srcLength)
@@ -100,7 +100,7 @@ char* my_trim(char* dest, const char* src)
 		src[end] == '\r' ||
 		src[end] == '\v' ||
 		src[end] == '\f'
-		) 
+		)
 	{
 		end--;
 		if (end < start)
@@ -118,7 +118,7 @@ char* my_trim(char* dest, const char* src)
 /////////////////////////////////////
 bool inputFailed(std::istream& input)
 {
-	if (input.fail()) 
+	if (input.fail())
 	{
 		input.clear();
 
@@ -136,9 +136,9 @@ void clearOutput(std::ostream& output)
 }
 
 //////////////////////////////////////////////
-char* formatCard(char* dest, const char* card) 
+char* formatCard(char* dest, const char* card)
 {
-	if (card == nullptr) 
+	if (card == nullptr)
 	{
 		dest[0] = '\0';
 		return dest;
@@ -195,6 +195,48 @@ char* formatCard(char* dest, const char* card)
 
 	return dest;
 }
+bool isCardValid(const char* playedCard, const char* discardPileCard)
+{
+	if (playedCard == nullptr || discardPileCard == nullptr) return false;
+
+	if (playedCard[0] == discardPileCard[0])
+		return true;
+	if (playedCard[0] == 'W')
+		return true;
+
+	char playedCardValue[MAX_CARD_LABEL_LENGTH + 1] = {};
+	char discardPileCardValue[MAX_CARD_LABEL_LENGTH + 1] = {};
+	my_strcpy(playedCardValue, playedCard + 2);
+	my_strcpy(discardPileCardValue, discardPileCard + 2);
+
+	bool invalid = my_strcmp(playedCardValue, discardPileCardValue);
+	return !invalid;
+}
+void removeCardFromHand(size_t cardIndex, char* hand[MAX_CARD_LABEL_LENGTH + 1], size_t& handSize)
+{
+	for (size_t i = cardIndex; i < handSize - 1; i++)
+	{
+		my_strcpy(hand[i], hand[i + 1]);
+	}
+	handSize--;
+}
+void addCardToHand(const char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& drawPileSize, char* hand[MAX_CARD_LABEL_LENGTH + 1], size_t& handSize)
+{
+	my_strcpy(hand[handSize], drawPile[drawPileSize - 1]);
+	handSize++;
+	drawPileSize--;
+}
+void addCardToDiscardPile(const char* card, char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& discardPileSize)
+{
+	my_strcpy(discardPile[discardPileSize], card);
+	discardPileSize++;
+}
+void prepareNextPlayerIndex(size_t& currentPlayer, bool direction, size_t numberOfPlayers)
+{
+	currentPlayer = (direction) ? (currentPlayer + 1) % numberOfPlayers
+		: (currentPlayer == 0) ? numberOfPlayers - 1
+		: currentPlayer - 1;
+}
 
 
 
@@ -211,10 +253,11 @@ int main()
 		std::cout << "To start a new game, enter the number of players: ";
 		std::cin >> numberOfPlayers;
 	}
+	clearOutput(std::cout);
 
 	//Entering the names of players:
 	char** playerNames = new char* [numberOfPlayers];
-	for (size_t i = 0; i < numberOfPlayers; i++) 
+	for (size_t i = 0; i < numberOfPlayers; i++)
 	{
 		char buffer[BUFFER_SIZE] = {};
 		char trimmedBuffer[BUFFER_SIZE] = {};
@@ -282,16 +325,16 @@ int main()
 		"W_WILD+4",
 		"W_WILD+4"
 	};
-	size_t drawPileLength = CARD_COUNT;
+	size_t drawPileSize = CARD_COUNT;
 	char discardPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {};
-	size_t discardPileLength = 0;
+	size_t discardPileSize = 0;
 
 	//CARD SHUFFLE
 	std::random_device rndDevice = {};
 	std::mt19937 mtGenerator(rndDevice());
-	std::shuffle(drawPile, drawPile + drawPileLength - 1, mtGenerator);
+	std::shuffle(drawPile, drawPile + drawPileSize - 1, mtGenerator);
 
-	char*** hands = new char**[numberOfPlayers];
+	char*** hands = new char** [numberOfPlayers];
 	size_t* handSizes = new size_t[numberOfPlayers];
 	for (size_t i = 0; i < numberOfPlayers; i++)
 	{
@@ -302,14 +345,14 @@ int main()
 		}
 		for (size_t j = 0; j < INITIAL_CARD_DRAW; j++)
 		{
-			my_strcpy(hands[i][j], drawPile[--drawPileLength]);
+			my_strcpy(hands[i][j], drawPile[--drawPileSize]);
 		}
 		handSizes[i] = INITIAL_CARD_DRAW;
 	}
 
-	my_strcpy(discardPile[discardPileLength], drawPile[drawPileLength - 1]);
-	discardPileLength++;
-	drawPileLength--;
+	my_strcpy(discardPile[discardPileSize], drawPile[drawPileSize - 1]);
+	discardPileSize++;
+	drawPileSize--;
 
 	std::cout << "Cards" << newline;
 	for (size_t i = 0; i < numberOfPlayers; i++)
@@ -323,38 +366,137 @@ int main()
 		std::cout << newline;
 	}
 
-	std::cin.get();
+	std::cin.ignore();
 	clearOutput(std::cout);
 
 	//GAME LOOP
 	size_t currentPlayer = 0;
 	bool direction = 1; //1 - ascending (clockwise), 0 - descending (counterclockwise)
-	while (true) 
+	while (true)
 	{
+		clearOutput(std::cout);
 		std::cout << "-----UNO-----" << newline;
-		if (discardPileLength <= 0) break;
+		if (discardPileSize <= 0) break;
 
+		const char* discardPileCard = discardPile[discardPileSize - 1];
 		{
 			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
-			std::cout << "Current Discard Pile card: "  << formatCard(formattedCard, discardPile[discardPileLength - 1]) << newline;
+			std::cout << "Current Discard Pile card: " << formatCard(formattedCard, discardPileCard) << newline;
 		}
 
 		std::cout << playerNames[currentPlayer] << " (Player " << currentPlayer + 1 << ") is in turn! Their cards are: " << newline;
+		bool hasValidCard = false;
 		for (size_t i = 0; i < handSizes[currentPlayer]; i++)
 		{
 			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			hasValidCard = hasValidCard || isCardValid(hands[currentPlayer][i], discardPileCard);
 			std::cout << '[' << i + 1 << "] " << formatCard(formattedCard, hands[currentPlayer][i]) << "  ";
 		}
 		std::cout << newline;
+		if (!hasValidCard)
+		{
+			std::cout << "No valid cards... Automatically drawing card from the Draw Pile: ";
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer]);
+			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			std::cout << '[' << handSizes[currentPlayer] << "] " << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << newline;
+
+			if (!isCardValid(hands[currentPlayer][handSizes[currentPlayer] - 1], discardPileCard))
+			{
+				std::cout << "Still no valid cards... Press Enter to skip!" << newline;
+				prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+				std::cin.get();
+
+				continue;
+			}
+		}
 
 		size_t cardToPlay = 0;
 		std::cin >> cardToPlay;
-		if(inputFailed(std::cin))
+		cardToPlay--;
+		if (inputFailed(std::cin))
 		{
 			clearOutput(std::cout);
-			std::cout << '\r' << "Invalid input!" << newline << "Pess any key to try again!" << newline;
+			std::cout << '\r' << "Invalid input!" << newline << "Press Enter to try again!" << newline;
 			std::cin.get();
 			clearOutput(std::cout);
+			continue;
+		}
+		if (cardToPlay >= handSizes[currentPlayer])
+		{
+			clearOutput(std::cout);
+			std::cout << '\r' << "Invalid input!" << newline << "Press Enter to try again!" << newline;
+			std::cin.ignore();
+			std::cin.get();
+			clearOutput(std::cout);
+			continue;
+		}
+
+		const char* playedCard = hands[currentPlayer][cardToPlay];
+		if (!isCardValid(playedCard, discardPileCard))
+		{
+			clearOutput(std::cout);
+			std::cout << '\r' << "Invalid card played!" << newline << "Press Enter key to try again!" << newline;
+			std::cin.ignore();
+			std::cin.get();
+			clearOutput(std::cout);
+			continue;
+		}
+
+		{
+			char formattedCard[MAX_CARD_LABEL_LENGTH + 1] = {};
+			std::cout << "You played: " << formatCard(formattedCard, playedCard) << newline;
+		}
+
+		char playedCardValue[MAX_CARD_LABEL_LENGTH + 1] = {};
+		my_strcpy(playedCardValue, playedCard + 2);
+
+		//Apply card effects which affect order
+		if (!my_strcmp(playedCardValue, "REVERSE"))
+			direction = !direction;
+		if (!my_strcmp(playedCardValue, "SKIP"))
+		{
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+		}
+		if (!my_strcmp(playedCardValue, "WILD+4"))
+		{
+			prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+		}
+
+		addCardToDiscardPile(playedCard, discardPile, discardPileSize);
+		removeCardFromHand(cardToPlay, hands[currentPlayer], handSizes[currentPlayer]);
+
+		//PREPARE NEXT PLAYER
+		prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+
+		//Apply card effects do not affect order
+				//if (!my_strcmp(playedCardValue, "+2"))
+		//{
+		//	prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+		//}
+		//if (!my_strcmp(playedCardValue, "WILD+4"))
+		//{
+		//	prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
+		//}
+		if (!my_strcmp(playedCardValue, "WILD") || !my_strcmp(playedCardValue, "WILD+4"))
+		{
+			char buffer[BUFFER_SIZE] = {};
+			char trimmedBuffer[BUFFER_SIZE] = {};
+			std::cout << "Enter a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
+			std::cin >> std::ws;
+			std::cin.getline(buffer, BUFFER_SIZE);
+			while (inputFailed(std::cin) || my_strlen(my_trim(trimmedBuffer, buffer)) != 1 ||
+				(my_strcmp(trimmedBuffer, "R") && my_strcmp(trimmedBuffer, "G") && my_strcmp(trimmedBuffer, "Y") && my_strcmp(trimmedBuffer, "B")))
+			{
+				clearOutput(std::cout);
+				std::cout << '\r' << "Invalid input!" << newline;
+				std::cout << "Enter a color code: [R] Red  [G] Green  [Y] Yellow  [B] Blue" << newline;
+				std::cin >> std::ws;
+				std::cin.getline(buffer, BUFFER_SIZE);
+			}
+
+			discardPile[discardPileSize - 1][0] = trimmedBuffer[0];
+
+			std::cin.get();
 			continue;
 		}
 
@@ -372,6 +514,7 @@ int main()
 		}
 		*/
 
+		std::cin.ignore();
 		std::cin.get();
 	}
 
