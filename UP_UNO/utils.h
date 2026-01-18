@@ -1,3 +1,18 @@
+/**
+*
+* Solution to course project # 04
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2025/2026
+*
+* @author Dimitar Valchev
+* @idnumber 5MI0600625
+* @compiler MSVC
+*
+* utils.h - General-purpose helper functions
+*
+*/
+
 #ifndef UTILS_H
 
 #define UTILS_H

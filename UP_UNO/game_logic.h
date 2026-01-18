@@ -1,3 +1,18 @@
+/**
+*
+* Solution to course project # 04
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2025/2026
+*
+* @author Dimitar Valchev
+* @idnumber 5MI0600625
+* @compiler MSVC
+*
+* game_logic.h - Game logic helper functions
+*
+*/
+
 #ifndef GAME_LOGIC_H
 
 #define GAME_LOGIC_H
@@ -337,7 +352,6 @@ bool loadGame(const char* filename,
 }
 
 //Game logic
-
 void enterPlayers(size_t& numberOfPlayers, char**& playerNames)
 {
 	//Entering the number of players:

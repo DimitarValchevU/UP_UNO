@@ -1,5 +1,19 @@
-#include <iostream>
+/**
+*
+* Solution to course project # 04
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2025/2026
+*
+* @author Dimitar Valchev
+* @idnumber 5MI0600625
+* @compiler MSVC
+*
+* main.cpp
+*
+*/
 
+#include <iostream>
 #include "game_logic.h"
 
 int main()
@@ -85,7 +99,7 @@ int main()
 		cardShuffleAndInitialDraw(numberOfPlayers, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes);
 	}
 
-	clearOutput();
+	clearOutput(std::cout);
 
 	//Game loop
 	while (true)
