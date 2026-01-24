@@ -33,7 +33,7 @@ const size_t MAX_CARD_LABEL_LENGTH = 9;
 const size_t MAX_FORMATTED_CARD_LABEL_LENGTH = 18;
 const size_t INITIAL_CARD_DRAW = 7;
 
-//Helper functions
+// Helper functions
 char* formatCard(char* dest, const char* card)
 {
 	if (card == nullptr)
@@ -170,191 +170,10 @@ void prepareNextPlayerIndex(size_t& currentPlayer, bool direction, size_t number
 		: currentPlayer - 1;
 }
 
-bool saveGame(const char* filename, size_t numberOfPlayers, char** playerNames,
-	char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t drawPileSize, char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t discardPileSize, char*** hands, size_t* handSizes,
-	bool direction, size_t currentPlayer)
-{
-	std::ofstream file(filename);
-	if (!file.is_open())
-		return false;
-
-	file << "NUMBER_OF_PLAYERS" << newline;
-	file << numberOfPlayers << newline;
-	file << "PLAYER_NAMES" << newline;
-	for (size_t i = 0; i < numberOfPlayers; i++)
-	{
-		file << playerNames[i] << newline;
-	}
-	file << newline;
-
-	file << "DRAW_PILE_SIZE" << newline;
-	file << drawPileSize << newline;
-	file << "DRAW_PILE" << newline;
-	for (size_t i = 0; i < drawPileSize; i++)
-	{
-		file << drawPile[i] << newline;
-	}
-	file << newline;
-
-	file << "DISCARD_PILE_SIZE" << newline;
-	file << discardPileSize << newline;
-	file << "DISCARD_PILE" << newline;
-	for (size_t i = 0; i < discardPileSize; i++)
-	{
-		file << discardPile[i] << newline;
-	}
-	file << newline;
-
-	file << "HANDS_SIZE" << newline;
-	file << numberOfPlayers << newline;
-	file << "HANDS" << newline;
-	for (size_t i = 0; i < numberOfPlayers; i++)
-	{
-		file << "HAND_SIZE" << newline;
-		file << handSizes[i] << newline;
-		file << "HAND_" << i << newline;
-		for (size_t j = 0; j < handSizes[i]; j++)
-		{
-			file << hands[i][j] << newline;
-		}
-	}
-	file << newline;
-
-	file << "DIRECTION" << newline;
-	file << direction << newline;
-	file << newline;
-
-	file << "CURRENT_PLAYER" << newline;
-	file << currentPlayer << newline;
-
-	file.close();
-	return true;
-}
-
-bool loadGame(const char* filename,
-	size_t& numberOfPlayers,
-	char**& playerNames,
-	char drawPile[][MAX_CARD_LABEL_LENGTH + 1],
-	size_t& drawPileSize,
-	char discardPile[][MAX_CARD_LABEL_LENGTH + 1],
-	size_t& discardPileSize,
-	char***& hands,
-	size_t*& handSizes,
-	bool& direction,
-	size_t& currentPlayer)
-{
-	std::ifstream file(filename);
-	if (!file.is_open()) return false;
-
-	char buffer[BUFFER_SIZE] = {};
-	char trimmed[BUFFER_SIZE] = {};
-
-	file.getline(buffer, BUFFER_SIZE);
-	file.getline(buffer, BUFFER_SIZE);
-	size_t numPlayersFromFile = (size_t)(my_atoi(my_trim(trimmed, buffer)));
-
-	if (playerNames != nullptr)
-	{
-		for (size_t i = 0; i < numberOfPlayers; i++)
-			delete[] playerNames[i];
-		delete[] playerNames;
-	}
-	if (hands != nullptr)
-	{
-		for (size_t i = 0; i < numberOfPlayers; i++)
-		{
-			for (size_t j = 0; j < CARD_COUNT; j++)
-				delete[] hands[i][j];
-			delete[] hands[i];
-		}
-		delete[] hands;
-	}
-	delete[] handSizes;
-
-	numberOfPlayers = numPlayersFromFile;
-
-	file.getline(buffer, BUFFER_SIZE);
-	playerNames = new char* [numberOfPlayers];
-	for (size_t i = 0; i < numberOfPlayers; i++)
-	{
-		file.getline(buffer, BUFFER_SIZE);
-		my_trim(trimmed, buffer);
-		size_t len = my_strlen(trimmed);
-		playerNames[i] = new char[len + 1];
-		my_strcpy(playerNames[i], trimmed);
-	}
-	file.getline(buffer, BUFFER_SIZE);
-
-	file.getline(buffer, BUFFER_SIZE);
-	file.getline(buffer, BUFFER_SIZE);
-	drawPileSize = (size_t)(my_atoi(my_trim(trimmed, buffer)));
-
-	file.getline(buffer, BUFFER_SIZE);
-	for (size_t i = 0; i < drawPileSize; i++)
-	{
-		file.getline(buffer, BUFFER_SIZE);
-		my_strcpy(drawPile[i], my_trim(trimmed, buffer));
-	}
-	file.getline(buffer, BUFFER_SIZE);
-
-	file.getline(buffer, BUFFER_SIZE);
-	file.getline(buffer, BUFFER_SIZE);
-	discardPileSize = (size_t)(my_atoi(my_trim(trimmed, buffer)));
-
-	file.getline(buffer, BUFFER_SIZE);
-	for (size_t i = 0; i < discardPileSize; i++)
-	{
-		file.getline(buffer, BUFFER_SIZE);
-		my_strcpy(discardPile[i], my_trim(trimmed, buffer));
-	}
-	file.getline(buffer, BUFFER_SIZE);
-
-	file.getline(buffer, BUFFER_SIZE);
-	file.getline(buffer, BUFFER_SIZE);
-
-	hands = new char** [numberOfPlayers];
-	handSizes = new size_t[numberOfPlayers];
-
-	file.getline(buffer, BUFFER_SIZE);
-	for (size_t p = 0; p < numberOfPlayers; p++)
-	{
-		file.getline(buffer, BUFFER_SIZE);
-		file.getline(buffer, BUFFER_SIZE);
-		handSizes[p] = (size_t)(my_atoi(my_trim(trimmed, buffer)));
-
-		file.getline(buffer, BUFFER_SIZE);
-		hands[p] = new char* [CARD_COUNT];
-		for (size_t j = 0; j < CARD_COUNT; j++)
-			hands[p][j] = new char[MAX_CARD_LABEL_LENGTH + 1];
-
-		for (size_t c = 0; c < handSizes[p]; c++)
-		{
-			file.getline(buffer, BUFFER_SIZE);
-			my_strcpy(hands[p][c], my_trim(trimmed, buffer));
-		}
-		for (size_t c = handSizes[p]; c < CARD_COUNT; c++)
-			hands[p][c][0] = '\0';
-	}
-	file.getline(buffer, BUFFER_SIZE);
-
-	file.getline(buffer, BUFFER_SIZE);
-	file.getline(buffer, BUFFER_SIZE);
-	my_trim(trimmed, buffer);
-	direction = (trimmed[0] == '1');
-	file.getline(buffer, BUFFER_SIZE);
-
-	file.getline(buffer, BUFFER_SIZE);
-	file.getline(buffer, BUFFER_SIZE);
-	currentPlayer = (size_t)(my_atoi(my_trim(trimmed, buffer)));
-
-	file.close();
-	return true;
-}
-
-//Game logic
+// Game logic functions
 void enterPlayers(size_t& numberOfPlayers, char**& playerNames)
 {
-	//Entering the number of players:
+	// Entering the number of players:
 	std::cout << "To start a new game, enter the number of players: ";
 	std::cin >> numberOfPlayers;
 	while (inputFailed(std::cin) || numberOfPlayers < MIN_PLAYERS || numberOfPlayers > MAX_PLAYERS)
@@ -368,7 +187,7 @@ void enterPlayers(size_t& numberOfPlayers, char**& playerNames)
 
 	playerNames = new char* [numberOfPlayers];
 
-	//Entering the names of players:
+	// Entering the names of players:
 	for (size_t i = 0; i < numberOfPlayers; i++)
 	{
 		char buffer[BUFFER_SIZE] = {};
@@ -537,13 +356,13 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 		unoCheck = true;
 	else if (handSizes[currentPlayer] == 0)
 	{
-		//Game loop end
+		// Game loop end
 		clearOutput(std::cout);
 		std::cout << playerNames[currentPlayer] << " has won the game!" << newline;
 		return 2;
 	}
 
-	//Apply card effects
+	// Apply card effects
 	if (!my_strcmp(playedCardValue, "REVERSE"))
 	{
 		direction = !direction;
@@ -670,7 +489,7 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 	}
 
 
-	//UNO check
+	// UNO! check
 	char buffer[BUFFER_SIZE] = {};
 	char trimmedBuffer[BUFFER_SIZE] = {};
 
@@ -698,5 +517,184 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 	return 1;
 }
 
+// Game state save and load functions
+bool saveGame(const char* filename, size_t numberOfPlayers, char** playerNames,
+	char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t drawPileSize, char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t discardPileSize, char*** hands, size_t* handSizes,
+	bool direction, size_t currentPlayer)
+{
+	std::ofstream file(filename);
+	if (!file.is_open())
+		return false;
+
+	file << "NUMBER_OF_PLAYERS" << newline;
+	file << numberOfPlayers << newline;
+	file << "PLAYER_NAMES" << newline;
+	for (size_t i = 0; i < numberOfPlayers; i++)
+	{
+		file << playerNames[i] << newline;
+	}
+	file << newline;
+
+	file << "DRAW_PILE_SIZE" << newline;
+	file << drawPileSize << newline;
+	file << "DRAW_PILE" << newline;
+	for (size_t i = 0; i < drawPileSize; i++)
+	{
+		file << drawPile[i] << newline;
+	}
+	file << newline;
+
+	file << "DISCARD_PILE_SIZE" << newline;
+	file << discardPileSize << newline;
+	file << "DISCARD_PILE" << newline;
+	for (size_t i = 0; i < discardPileSize; i++)
+	{
+		file << discardPile[i] << newline;
+	}
+	file << newline;
+
+	file << "HANDS_SIZE" << newline;
+	file << numberOfPlayers << newline;
+	file << "HANDS" << newline;
+	for (size_t i = 0; i < numberOfPlayers; i++)
+	{
+		file << "HAND_SIZE" << newline;
+		file << handSizes[i] << newline;
+		file << "HAND_" << i << newline;
+		for (size_t j = 0; j < handSizes[i]; j++)
+		{
+			file << hands[i][j] << newline;
+		}
+	}
+	file << newline;
+
+	file << "DIRECTION" << newline;
+	file << direction << newline;
+	file << newline;
+
+	file << "CURRENT_PLAYER" << newline;
+	file << currentPlayer << newline;
+
+	file.close();
+	return true;
+}
+
+bool loadGame(const char* filename,
+	size_t& numberOfPlayers,
+	char**& playerNames,
+	char drawPile[][MAX_CARD_LABEL_LENGTH + 1],
+	size_t& drawPileSize,
+	char discardPile[][MAX_CARD_LABEL_LENGTH + 1],
+	size_t& discardPileSize,
+	char***& hands,
+	size_t*& handSizes,
+	bool& direction,
+	size_t& currentPlayer)
+{
+	std::ifstream file(filename);
+	if (!file.is_open() || file.tellg() == 0) // Empty file...
+		return false;
+
+	char buffer[BUFFER_SIZE] = {};
+	char trimmed[BUFFER_SIZE] = {};
+
+	file.getline(buffer, BUFFER_SIZE);
+	file.getline(buffer, BUFFER_SIZE);
+	size_t numPlayersFromFile = (size_t)(my_atoi(my_trim(trimmed, buffer)));
+
+	if (playerNames != nullptr && hands != nullptr)
+	{
+		cleanupMemory(numberOfPlayers, playerNames, hands, handSizes);
+	}
+
+	numberOfPlayers = numPlayersFromFile;
+
+	file.getline(buffer, BUFFER_SIZE);
+	playerNames = new char* [numberOfPlayers];
+	for (size_t i = 0; i < numberOfPlayers; i++)
+	{
+		file.getline(buffer, BUFFER_SIZE);
+		my_trim(trimmed, buffer);
+		size_t len = my_strlen(trimmed);
+		playerNames[i] = new char[len + 1];
+		my_strcpy(playerNames[i], trimmed);
+	}
+	file.getline(buffer, BUFFER_SIZE);
+
+	file.getline(buffer, BUFFER_SIZE);
+	file.getline(buffer, BUFFER_SIZE);
+	drawPileSize = (size_t)(my_atoi(my_trim(trimmed, buffer)));
+
+	file.getline(buffer, BUFFER_SIZE);
+	for (size_t i = 0; i < drawPileSize; i++)
+	{
+		file.getline(buffer, BUFFER_SIZE);
+		my_strcpy(drawPile[i], my_trim(trimmed, buffer));
+	}
+	file.getline(buffer, BUFFER_SIZE);
+
+	file.getline(buffer, BUFFER_SIZE);
+	file.getline(buffer, BUFFER_SIZE);
+	discardPileSize = (size_t)(my_atoi(my_trim(trimmed, buffer)));
+
+	file.getline(buffer, BUFFER_SIZE);
+	for (size_t i = 0; i < discardPileSize; i++)
+	{
+		file.getline(buffer, BUFFER_SIZE);
+		my_strcpy(discardPile[i], my_trim(trimmed, buffer));
+	}
+	file.getline(buffer, BUFFER_SIZE);
+
+	file.getline(buffer, BUFFER_SIZE);
+	file.getline(buffer, BUFFER_SIZE);
+
+	hands = new char** [numberOfPlayers];
+	handSizes = new size_t[numberOfPlayers];
+
+	file.getline(buffer, BUFFER_SIZE);
+	for (size_t p = 0; p < numberOfPlayers; p++)
+	{
+		file.getline(buffer, BUFFER_SIZE);
+		file.getline(buffer, BUFFER_SIZE);
+		handSizes[p] = (size_t)(my_atoi(my_trim(trimmed, buffer)));
+
+		file.getline(buffer, BUFFER_SIZE);
+		hands[p] = new char* [CARD_COUNT];
+		for (size_t j = 0; j < CARD_COUNT; j++)
+			hands[p][j] = new char[MAX_CARD_LABEL_LENGTH + 1];
+
+		for (size_t c = 0; c < handSizes[p]; c++)
+		{
+			file.getline(buffer, BUFFER_SIZE);
+			my_strcpy(hands[p][c], my_trim(trimmed, buffer));
+		}
+		for (size_t c = handSizes[p]; c < CARD_COUNT; c++)
+			hands[p][c][0] = '\0';
+	}
+	file.getline(buffer, BUFFER_SIZE);
+
+	file.getline(buffer, BUFFER_SIZE);
+	file.getline(buffer, BUFFER_SIZE);
+	my_trim(trimmed, buffer);
+	direction = (trimmed[0] == '1');
+	file.getline(buffer, BUFFER_SIZE);
+
+	file.getline(buffer, BUFFER_SIZE);
+	file.getline(buffer, BUFFER_SIZE);
+	currentPlayer = (size_t)(my_atoi(my_trim(trimmed, buffer)));
+
+	file.close();
+	return true;
+}
+
+bool clearGame(const char* filename)
+{
+	std::ofstream file(filename);
+	if (!file.is_open())
+		return false;
+
+	file.close();
+	return true;
+}
 
 #endif // !GAME_LOGIC_H

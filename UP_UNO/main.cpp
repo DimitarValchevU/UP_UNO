@@ -18,10 +18,10 @@
 
 int main()
 {
+	// Variable declaration logic
 	size_t numberOfPlayers = 0;
 	char** playerNames = nullptr;
 
-	//Game logic
 	char drawPile[CARD_COUNT][MAX_CARD_LABEL_LENGTH + 1] = {
 		// Red
 		"R_0","R_1","R_2","R_3","R_4","R_5","R_6","R_7","R_8","R_9",
@@ -65,21 +65,24 @@ int main()
 	size_t* handSizes = nullptr;
 
 	size_t currentPlayer = 0;
-	bool direction = 1; //1 - ascending (clockwise), 0 - descending (counterclockwise)
+	bool direction = 1; // 1 - ascending (clockwise), 0 - descending (counterclockwise)
 
 
-	//Menu Choice
+	// Menu Choice
 	std::cout << "--- UNO ---" << newline;
 	std::cout << "First person to to say \"UNO!\" and then play their last card wins the game!" << newline;
 	std::cout << "1. New Game" << newline;
 	std::cout << "2. Load Game" << newline;
 	std::cout << "Enter your choice: ";
 
-	size_t choice;
+	size_t choice = 0;
 	std::cin >> choice;
 
-	if (choice != 1 && choice != 2)
+	if (std::cin.fail() || (choice != 1 && choice != 2))
+	{
+		std::cout << "Invalid input!" << newline;
 		return -1;
+	}
 
 	if (choice == 2)
 	{
@@ -102,7 +105,7 @@ int main()
 
 	clearOutput(std::cout);
 
-	//Game loop
+	// Game loop
 	while (true)
 	{
 		saveGame("game.txt", numberOfPlayers, playerNames, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer);
@@ -111,10 +114,13 @@ int main()
 		if (result == 1)
 			continue;
 		else if (result == 2)
+		{
+			clearGame("game.txt");
 			break;
+		}
 	}
 
-	//Memory cleanup
+	// Memory cleanup
 	cleanupMemory(numberOfPlayers, playerNames, hands, handSizes);
 
 	return 0;
