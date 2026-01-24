@@ -267,15 +267,15 @@ void cleanupMemory(size_t numberOfPlayers, char**& playerNames, char***& hands, 
 	handSizes = nullptr;
 }
 
-size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char** playerNames,
+size_t outputTurnInfo(size_t& numberOfPlayers, char** playerNames,
 	char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& drawPileSize, char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& discardPileSize, char*** hands, size_t* handSizes,
-	bool& direction, size_t& currentPlayer)
+	bool& direction, size_t& currentPlayer, const char*& discardPileCard)
 {
 	clearOutput(std::cout);
 	std::cout << "--- UNO ---" << newline;
 	if (discardPileSize <= 0) return 2;
 
-	const char* discardPileCard = discardPile[discardPileSize - 1];
+	discardPileCard = discardPile[discardPileSize - 1];
 	{
 		char formattedCard[MAX_FORMATTED_CARD_LABEL_LENGTH + 1] = {};
 		std::cout << "Current Discard Pile card: " << formatCard(formattedCard, discardPileCard) << newline;
@@ -306,8 +306,13 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 			return 1;
 		}
 	}
+	return 0;
+}
 
-	size_t cardToPlay = 0;
+size_t playTurn(size_t& numberOfPlayers, char** playerNames,
+	char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& drawPileSize, char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& discardPileSize, char*** hands, size_t* handSizes,
+	bool& direction, size_t& currentPlayer, const char* discardPileCard, size_t& cardToPlay, bool& unoCheck, char playedCardValue[MAX_CARD_LABEL_LENGTH + 1])
+{
 	std::cin >> cardToPlay;
 	cardToPlay--;
 	if (inputFailed(std::cin))
@@ -344,14 +349,10 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 		std::cout << "You played: " << formatCard(formattedCard, playedCard) << newline;
 	}
 
-	char playedCardValue[MAX_CARD_LABEL_LENGTH + 1] = {};
 	my_strcpy(playedCardValue, playedCard + 2);
-
 
 	addCardToDiscardPile(playedCard, discardPile, discardPileSize);
 	removeCardFromHand(cardToPlay, hands[currentPlayer], handSizes[currentPlayer]);
-	bool unoCheck = false;
-	size_t currentPlayerBackup = currentPlayer;
 	if (handSizes[currentPlayer] == 1)
 		unoCheck = true;
 	else if (handSizes[currentPlayer] == 0)
@@ -361,9 +362,14 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 		std::cout << playerNames[currentPlayer] << " has won the game!" << newline;
 		return 2;
 	}
+	return 0;
+}
 
-	// Apply card effects
-	if (!my_strcmp(playedCardValue, "REVERSE"))
+size_t applyCardEffects(size_t& numberOfPlayers, char** playerNames,
+	char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& drawPileSize, char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& discardPileSize, char*** hands, size_t* handSizes,
+	bool& direction, size_t& currentPlayer, bool unoCheck, char playedCardValue[MAX_CARD_LABEL_LENGTH + 1])
+{
+	if (!my_strcmp(playedCardValue, "REVERSE") && numberOfPlayers > 2)
 	{
 		direction = !direction;
 		prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
@@ -376,7 +382,7 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 			return 1;
 		}
 	}
-	else if (!my_strcmp(playedCardValue, "SKIP"))
+	else if ((!my_strcmp(playedCardValue, "REVERSE") && numberOfPlayers == 2) || !my_strcmp(playedCardValue, "SKIP"))
 	{
 		prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
 		prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
@@ -441,12 +447,11 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 		prepareNextPlayerIndex(currentPlayer, direction, numberOfPlayers);
 
 		char formattedCard[MAX_FORMATTED_CARD_LABEL_LENGTH + 1] = {};
-		addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
-		std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
-		addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
-		std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
-		addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
-		std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
+		for (size_t k = 0; k < 3; k++)
+		{
+			addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
+			std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << ", ";
+		}
 		addCardToHand(drawPile, drawPileSize, hands[currentPlayer], handSizes[currentPlayer], discardPile, discardPileSize, &std::cout);
 		std::cout << formatCard(formattedCard, hands[currentPlayer][handSizes[currentPlayer] - 1]) << " drawed from the next player!" << newline;
 
@@ -487,7 +492,38 @@ size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char*
 			return 1;
 		}
 	}
+	return 0;
+}
 
+size_t executeGameLogic(const char* saveFilename, size_t& numberOfPlayers, char** playerNames,
+	char drawPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& drawPileSize, char discardPile[][MAX_CARD_LABEL_LENGTH + 1], size_t& discardPileSize, char*** hands, size_t* handSizes,
+	bool& direction, size_t& currentPlayer)
+{
+	// Output turn info
+	const char* discardPileCard;
+	size_t outputTurnInfoResult = outputTurnInfo(numberOfPlayers, playerNames, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer, discardPileCard);
+	if (outputTurnInfoResult == 1)
+		return 1;
+	if (outputTurnInfoResult == 2)
+		return 2;
+
+	// Play turn
+	size_t cardToPlay = 0;
+	size_t currentPlayerBackup = currentPlayer;
+	bool unoCheck = false;
+	char playedCardValue[MAX_CARD_LABEL_LENGTH + 1] = {};
+	size_t playTurnResult = playTurn(numberOfPlayers, playerNames, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer, discardPileCard, cardToPlay, unoCheck, playedCardValue);
+	if (playTurnResult == 1)
+		return 1;
+	if (playTurnResult == 2)
+		return 2;
+
+	// Apply card effects
+	size_t applyCardEffectsResult = applyCardEffects(numberOfPlayers, playerNames, drawPile, drawPileSize, discardPile, discardPileSize, hands, handSizes, direction, currentPlayer, unoCheck, playedCardValue);
+	if (applyCardEffectsResult == 1)
+		return 1;
+	if (applyCardEffectsResult == 2)
+		return 2;
 
 	// UNO! check
 	char buffer[BUFFER_SIZE] = {};
@@ -592,7 +628,7 @@ bool loadGame(const char* filename,
 	size_t& currentPlayer)
 {
 	std::ifstream file(filename);
-	if (!file.is_open() || file.tellg() == 0) // Empty file...
+	if (!file.is_open() || file.peek() == std::ifstream::traits_type::eof()) // Empty file... (first symbol == EOF)
 		return false;
 
 	char buffer[BUFFER_SIZE] = {};
@@ -602,7 +638,7 @@ bool loadGame(const char* filename,
 	file.getline(buffer, BUFFER_SIZE);
 	size_t numPlayersFromFile = (size_t)(my_atoi(my_trim(trimmed, buffer)));
 
-	if (playerNames != nullptr && hands != nullptr)
+	if (playerNames != nullptr && hands != nullptr && handSizes != nullptr)
 	{
 		cleanupMemory(numberOfPlayers, playerNames, hands, handSizes);
 	}
