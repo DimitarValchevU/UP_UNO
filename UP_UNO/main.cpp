@@ -18,7 +18,7 @@
 
 int main()
 {
-	// Variable declaration logic
+	// Variable declaration
 	size_t numberOfPlayers = 0;
 	char** playerNames = nullptr;
 
@@ -68,7 +68,7 @@ int main()
 	bool direction = 1; // 1 - ascending (clockwise), 0 - descending (counterclockwise)
 
 
-	// Menu Choice
+	// Menu choice
 	std::cout << "--- UNO ---" << newline;
 	std::cout << "First person to to say \"UNO!\" and then play their last card wins the game!" << newline;
 	std::cout << "1. New Game" << newline;
@@ -78,7 +78,7 @@ int main()
 	size_t choice = 0;
 	std::cin >> choice;
 
-	if (std::cin.fail() || (choice != 1 && choice != 2))
+	if (std::cin.fail() || (choice != 1 && choice != 2)) //inputFailed???
 	{
 		std::cout << "Invalid input!" << newline;
 		return -1;
